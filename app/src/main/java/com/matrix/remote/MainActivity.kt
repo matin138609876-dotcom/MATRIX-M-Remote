@@ -63,7 +63,7 @@ class MainActivity : Activity() {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
             setPadding(dp(16), dp(18), dp(16), dp(18))
-            background = panel()
+            setBackground(panel())
         }
 
         val statusTitle = TextView(this).apply {
