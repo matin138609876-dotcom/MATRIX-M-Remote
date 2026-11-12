@@ -87,7 +87,7 @@ class MainActivity : Activity() {
         content.addView(security)
 
         val footer = TextView(this).apply {
-            text = "MATRIX M COMPANION  •  VERSION 1.0.1"
+            text = "MATRIX M COMPANION  •  VERSION 1.0.2"
             textSize = 11f
             gravity = Gravity.CENTER
             setTextColor(muted)

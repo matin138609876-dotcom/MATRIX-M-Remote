@@ -1,6 +1,7 @@
 package com.matrix.remote
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -8,6 +9,9 @@ import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import com.matrix.remote.devices.DeviceRepository
+import com.matrix.remote.devices.DeviceStatus
+import com.matrix.remote.devices.MatrixDevice
 
 class MainActivity : Activity() {
 
@@ -16,26 +20,27 @@ class MainActivity : Activity() {
     private val muted = Color.rgb(190, 190, 200)
 
     private lateinit var root: FrameLayout
-    private lateinit var background: ImageView
-    private lateinit var overlay: View
     private lateinit var content: LinearLayout
+    private lateinit var repository: DeviceRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        repository = DeviceRepository(this)
 
         window.statusBarColor = Color.rgb(12, 5, 10)
         window.navigationBarColor = Color.BLACK
 
         root = FrameLayout(this)
 
-        background = ImageView(this).apply {
+        val background = ImageView(this).apply {
             setImageResource(R.drawable.matrix_wallpaper)
             scaleType = ImageView.ScaleType.FIT_CENTER
             setBackgroundColor(Color.BLACK)
         }
         root.addView(background, FrameLayout.LayoutParams(-1, -1))
 
-        overlay = View(this).apply {
+        val overlay = View(this).apply {
             setBackgroundColor(Color.argb(105, 0, 0, 0))
         }
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
@@ -46,13 +51,14 @@ class MainActivity : Activity() {
             setPadding(dp(20), dp(24), dp(20), dp(24))
         }
 
-        val scroll = ScrollView(this)
-        scroll.isFillViewport = true
-        scroll.addView(content)
+        val scroll = ScrollView(this).apply {
+            isFillViewport = true
+            addView(content)
+        }
         root.addView(scroll, FrameLayout.LayoutParams(-1, -1))
 
-        buildHome()
         setContentView(root)
+        buildHome()
     }
 
     private fun buildHome() {
@@ -76,8 +82,9 @@ class MainActivity : Activity() {
         content.addView(subtitle)
         content.addView(space(22))
 
+        val devices = repository.getDevices()
         val status = TextView(this).apply {
-            text = "●  سیستم آماده به کار است"
+            text = "●  ${devices.size} دستگاه ثبت‌شده"
             textSize = 14f
             gravity = Gravity.CENTER
             setTextColor(Color.rgb(100, 230, 140))
@@ -93,17 +100,16 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(dp(24), dp(28), dp(24), dp(28))
             background = transparentPanel()
-            contentDescription = "ورود به اتصال امن و ساخت QR"
+            contentDescription = "اتصال امن و ساخت QR"
             setOnClickListener {
                 showFeature(
                     "اتصال امن",
-                    "ساخت QR Code برای اتصال گوشی دوم",
-                    "در این بخش QR اختصاصی اتصال ساخته خواهد شد."
+                    "اتصال گوشی جدید",
+                    "مرحله ساخت QR و اتصال واقعی در حال توسعه است."
                 )
             }
         }
-        val maskParams = LinearLayout.LayoutParams(-1, dp(190))
-        content.addView(mask, maskParams)
+        content.addView(mask, LinearLayout.LayoutParams(-1, dp(190)))
 
         val hint = TextView(this).apply {
             text = "برای اتصال امن، نقاب را لمس کن"
@@ -112,27 +118,44 @@ class MainActivity : Activity() {
             setTextColor(white)
         }
         content.addView(hint)
-        content.addView(space(28))
+        content.addView(space(25))
 
-        val section = TextView(this).apply {
-            text = "قابلیت‌های MATRIX M"
-            textSize = 18f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setTextColor(white)
+        addFeature("📱", "دستگاه‌های من", "مشاهده و مدیریت گوشی‌های ثبت‌شده") {
+            showDeviceManagement()
         }
-        content.addView(section)
-        content.addView(space(14))
 
-        addFeature("📷", "دوربین", "مشاهده دوربین گوشی دوم")
-        addFeature("▣", "نمایشگر", "اشتراک صفحه گوشی دوم")
-        addFeature("📁", "انتقال فایل", "انتقال فایل با اجازه صاحب دستگاه")
-        addFeature("⚙", "تنظیمات", "تنظیمات و مدیریت دسترسی‌ها")
+        addFeature("📷", "دوربین زنده", "مشاهده دوربین گوشی دوم") {
+            showFeature("دوربین زنده", "دوربین گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("🎙️", "صدای زنده", "دریافت صدای زنده با اجازه صاحب دستگاه") {
+            showFeature("صدای زنده", "میکروفون گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("▣", "نمایشگر زنده", "مشاهده صفحه گوشی دوم") {
+            showFeature("نمایشگر زنده", "اشتراک صفحه", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("📍", "موقعیت زنده", "موقعیت مکانی با اجازه صاحب دستگاه") {
+            showFeature("موقعیت زنده", "موقعیت گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("🔔", "اعلان‌ها", "مشاهده اعلان‌های مجاز گوشی دوم") {
+            showFeature("اعلان‌ها", "اعلان‌های گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("📁", "انتقال فایل", "انتقال فایل با اجازه صاحب دستگاه") {
+            showFeature("انتقال فایل", "مدیریت فایل‌ها", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        }
+
+        addFeature("⚙", "تنظیمات", "تنظیمات و مدیریت دسترسی‌ها") {
+            showFeature("تنظیمات", "تنظیمات برنامه", "بخش تنظیمات در حال توسعه است.")
+        }
 
         content.addView(space(22))
 
         val footer = TextView(this).apply {
-            text = "MATRIX M  •  VERSION 1.0"
+            text = "MATRIX M  •  VERSION 1.0.2"
             textSize = 11f
             gravity = Gravity.CENTER
             setTextColor(muted)
@@ -140,7 +163,12 @@ class MainActivity : Activity() {
         content.addView(footer)
     }
 
-    private fun addFeature(icon: String, title: String, description: String) {
+    private fun addFeature(
+        icon: String,
+        title: String,
+        description: String,
+        action: () -> Unit
+    ) {
         val item = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -148,9 +176,7 @@ class MainActivity : Activity() {
             background = transparentPanel()
             isClickable = true
             isFocusable = true
-            setOnClickListener {
-                showFeature(title, description, "این قابلیت در مراحل بعدی فعال می‌شود.")
-            }
+            setOnClickListener { action() }
         }
 
         val symbol = TextView(this).apply {
@@ -171,6 +197,7 @@ class MainActivity : Activity() {
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(white)
         }
+
         val detail = TextView(this).apply {
             text = description
             textSize = 11f
@@ -186,9 +213,189 @@ class MainActivity : Activity() {
         content.addView(item, params)
     }
 
-    private fun showFeature(title: String, subtitle: String, message: String) {
+    private fun showDeviceManagement() {
         content.removeAllViews()
 
+        addBackButton()
+        content.addView(space(20))
+
+        val heading = TextView(this).apply {
+            text = "دستگاه‌های من"
+            textSize = 26f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(red)
+        }
+        content.addView(heading)
+        content.addView(space(15))
+
+        val addButton = TextView(this).apply {
+            text = "＋  افزودن دستگاه"
+            textSize = 16f
+            gravity = Gravity.CENTER
+            setTextColor(white)
+            setPadding(dp(16), dp(16), dp(16), dp(16))
+            background = panel()
+            isClickable = true
+            setOnClickListener { showAddDeviceDialog() }
+        }
+        content.addView(addButton, matchWrap())
+        content.addView(space(18))
+
+        val devices = repository.getDevices()
+
+        if (devices.isEmpty()) {
+            val empty = TextView(this).apply {
+                text = "هنوز دستگاهی ثبت نشده است."
+                textSize = 14f
+                gravity = Gravity.CENTER
+                setTextColor(muted)
+                setPadding(dp(15), dp(25), dp(15), dp(25))
+                background = transparentPanel()
+            }
+            content.addView(empty, matchWrap())
+            return
+        }
+
+        devices.forEach { device ->
+            addDeviceRow(device)
+        }
+    }
+
+    private fun addDeviceRow(device: MatrixDevice) {
+        val selected = repository.getSelectedDeviceId() == device.id
+
+        val card = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(14), dp(14), dp(14), dp(14))
+            background = transparentPanel()
+        }
+
+        val name = TextView(this).apply {
+            text = (if (selected) "✓  " else "") + device.name
+            textSize = 17f
+            typeface = Typeface.DEFAULT_BOLD
+            setTextColor(white)
+        }
+        card.addView(name)
+
+        val stateText = when (device.status) {
+            DeviceStatus.PENDING -> "در انتظار اتصال واقعی"
+            DeviceStatus.CONNECTED -> "متصل"
+            DeviceStatus.DISCONNECTED -> "قطع اتصال"
+        }
+
+        val state = TextView(this).apply {
+            text = stateText
+            textSize = 12f
+            setTextColor(muted)
+        }
+        card.addView(state)
+        card.addView(space(10))
+
+        val actions = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+        }
+
+        val select = smallButton(if (selected) "انتخاب‌شده" else "انتخاب") {
+            repository.selectDevice(device.id)
+            showDeviceManagement()
+        }
+
+        val rename = smallButton("تغییر نام") {
+            showRenameDialog(device)
+        }
+
+        val delete = smallButton("حذف") {
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("حذف دستگاه")
+                .setMessage("دستگاه «${device.name}» حذف شود؟")
+                .setNegativeButton("انصراف", null)
+                .setPositiveButton("حذف") { _, _ ->
+                    repository.removeDevice(device.id)
+                    showDeviceManagement()
+                }
+                .show()
+        }
+
+        actions.addView(select)
+        actions.addView(rename)
+        actions.addView(delete)
+        card.addView(actions)
+
+        val params = LinearLayout.LayoutParams(-1, -2)
+        params.bottomMargin = dp(12)
+        content.addView(card, params)
+    }
+
+    private fun smallButton(label: String, action: () -> Unit): TextView {
+        return TextView(this).apply {
+            text = label
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextColor(white)
+            setPadding(dp(9), dp(10), dp(9), dp(10))
+            background = panel()
+            isClickable = true
+            setOnClickListener { action() }
+
+            val params = LinearLayout.LayoutParams(0, -2, 1f)
+            params.marginEnd = dp(5)
+            layoutParams = params
+        }
+    }
+
+    private fun showAddDeviceDialog() {
+        val input = EditText(this).apply {
+            hint = "مثلاً گوشی متین"
+            setSingleLine(true)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("ثبت دستگاه جدید")
+            .setMessage("نامی برای دستگاه انتخاب کن.")
+            .setView(input)
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("ثبت") { _, _ ->
+                val name = input.text.toString().trim()
+
+                if (name.isNotEmpty()) {
+                    repository.addDevice(name)
+                    showDeviceManagement()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "نام دستگاه را وارد کن.",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+            .show()
+    }
+
+    private fun showRenameDialog(device: MatrixDevice) {
+        val input = EditText(this).apply {
+            setText(device.name)
+            setSingleLine(true)
+        }
+
+        AlertDialog.Builder(this)
+            .setTitle("تغییر نام دستگاه")
+            .setView(input)
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("ذخیره") { _, _ ->
+                val name = input.text.toString().trim()
+
+                if (name.isNotEmpty()) {
+                    repository.renameDevice(device.id, name)
+                    showDeviceManagement()
+                }
+            }
+            .show()
+    }
+
+    private fun addBackButton() {
         val back = TextView(this).apply {
             text = "‹  بازگشت"
             textSize = 16f
@@ -199,7 +406,11 @@ class MainActivity : Activity() {
             setOnClickListener { buildHome() }
         }
         content.addView(back, matchWrap())
+    }
 
+    private fun showFeature(title: String, subtitle: String, message: String) {
+        content.removeAllViews()
+        addBackButton()
         content.addView(space(45))
 
         val heading = TextView(this).apply {
@@ -210,7 +421,6 @@ class MainActivity : Activity() {
             setTextColor(red)
         }
         content.addView(heading)
-
         content.addView(space(16))
 
         val description = TextView(this).apply {
@@ -220,7 +430,6 @@ class MainActivity : Activity() {
             setTextColor(white)
         }
         content.addView(description)
-
         content.addView(space(24))
 
         val info = TextView(this).apply {
@@ -264,6 +473,7 @@ class MainActivity : Activity() {
         return (value * resources.displayMetrics.density).toInt()
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         buildHome()
     }
