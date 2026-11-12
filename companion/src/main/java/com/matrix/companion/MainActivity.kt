@@ -156,6 +156,12 @@ class MainActivity : Activity() {
         }
         content.addView(security)
 
+        val passwordCard = makeCard()
+        addText(passwordCard, "🔐  تغییر رمز ورود", 17f, white, true)
+        addText(passwordCard, "تغییر رمز اختصاصی این گوشی", 13f, muted, false)
+        passwordCard.setOnClickListener { showPasswordChangeDialog() }
+        content.addView(passwordCard)
+
         val footer = TextView(this).apply {
             text = "MATRIX M COMPANION  •  VERSION 1.0.2"
             textSize = 11f
@@ -168,6 +174,60 @@ class MainActivity : Activity() {
         scroll.addView(content)
         root.addView(scroll)
         setContentView(root)
+    }
+
+
+    private fun showPasswordChangeDialog() {
+        val manager = PasswordManager(this)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(12), dp(20), dp(4))
+        }
+
+        fun passwordField(label: String): EditText {
+            return EditText(this).apply {
+                hint = label
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                textSize = 15f
+            }
+        }
+
+        val current = passwordField("رمز فعلی")
+        val newPassword = passwordField("رمز جدید")
+        val confirm = passwordField("تکرار رمز جدید")
+
+        layout.addView(current)
+        layout.addView(newPassword)
+        layout.addView(confirm)
+
+        AlertDialog.Builder(this)
+            .setTitle("تغییر رمز ورود")
+            .setView(layout)
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("ذخیره", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val oldChars = current.text.toString().toCharArray()
+                        val newChars = newPassword.text.toString().toCharArray()
+
+                        if (newPassword.text.toString() != confirm.text.toString()) {
+                            Toast.makeText(this@MainActivity, "تکرار رمز با رمز جدید یکسان نیست.", Toast.LENGTH_SHORT).show()
+                        } else if (manager.changePassword(oldChars, newChars)) {
+                            oldChars.fill(' ')
+                            newChars.fill(' ')
+                            Toast.makeText(this@MainActivity, "رمز ورود با موفقیت تغییر کرد.", Toast.LENGTH_LONG).show()
+                            dismiss()
+                        } else {
+                            oldChars.fill(' ')
+                            newChars.fill(' ')
+                            Toast.makeText(this@MainActivity, "رمز فعلی اشتباه است یا رمز جدید شرایط لازم را ندارد.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+                show()
+            }
     }
 
     private fun addSection(parent: LinearLayout, title: String) {

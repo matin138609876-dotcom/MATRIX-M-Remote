@@ -218,7 +218,7 @@ class MainActivity : Activity() {
         }
 
         addFeature("⚙", "تنظیمات", "تنظیمات و مدیریت دسترسی‌ها") {
-            showFeature("تنظیمات", "تنظیمات برنامه", "بخش تنظیمات در حال توسعه است.")
+            showSettings()
         }
 
         content.addView(space(22))
@@ -462,6 +462,84 @@ class MainActivity : Activity() {
                 }
             }
             .show()
+    }
+
+
+    private fun showSettings() {
+        content.removeAllViews()
+        addBackButton()
+        content.addView(space(35))
+
+        val heading = TextView(this).apply {
+            text = "تنظیمات"
+            textSize = 27f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(red)
+        }
+        content.addView(heading)
+        content.addView(space(25))
+
+        val changePassword = Button(this).apply {
+            text = "🔐  تغییر رمز ورود"
+            setTextColor(white)
+            setOnClickListener { showPasswordChangeDialog() }
+        }
+        content.addView(changePassword, matchWrap())
+    }
+
+    private fun showPasswordChangeDialog() {
+        val manager = PasswordManager(this)
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), dp(12), dp(20), dp(4))
+        }
+
+        fun passwordField(hintText: String): EditText {
+            return EditText(this).apply {
+                hint = hintText
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+                textSize = 15f
+            }
+        }
+
+        val current = passwordField("رمز فعلی")
+        val newPassword = passwordField("رمز جدید")
+        val confirm = passwordField("تکرار رمز جدید")
+
+        layout.addView(current)
+        layout.addView(newPassword)
+        layout.addView(confirm)
+
+        AlertDialog.Builder(this)
+            .setTitle("تغییر رمز ورود")
+            .setView(layout)
+            .setNegativeButton("انصراف", null)
+            .setPositiveButton("ذخیره", null)
+            .create()
+            .apply {
+                setOnShowListener {
+                    getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                        val oldChars = current.text.toString().toCharArray()
+                        val newChars = newPassword.text.toString().toCharArray()
+                        val confirmText = confirm.text.toString()
+
+                        if (newPassword.text.toString() != confirmText) {
+                            Toast.makeText(this@MainActivity, "تکرار رمز با رمز جدید یکسان نیست.", Toast.LENGTH_SHORT).show()
+                        } else if (manager.changePassword(oldChars, newChars)) {
+                            oldChars.fill(' ')
+                            newChars.fill(' ')
+                            Toast.makeText(this@MainActivity, "رمز ورود با موفقیت تغییر کرد.", Toast.LENGTH_LONG).show()
+                            dismiss()
+                        } else {
+                            oldChars.fill(' ')
+                            newChars.fill(' ')
+                            Toast.makeText(this@MainActivity, "رمز فعلی اشتباه است یا رمز جدید شرایط لازم را ندارد.", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }
+                show()
+            }
     }
 
     private fun addBackButton() {
