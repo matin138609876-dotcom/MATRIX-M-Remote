@@ -28,5 +28,6 @@ include(
     ":remote-screen",
     ":camera",
     ":file-transfer",
-    ":messaging"
+    ":messaging",
+    ":companion"
 )

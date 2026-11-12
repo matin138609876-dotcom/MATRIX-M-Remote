@@ -1,4 +1,4 @@
-name: MATRIX-M-Remote Android Build
+name: MATRIX M Android Build
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -25,19 +26,24 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
 
       - name: Install Android SDK packages
         run: |
           sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0"
 
-      - name: Build debug APK
-        run: gradle assembleDebug --no-daemon
+      - name: Build both APKs
+        run: gradle assembleDebug :companion:assembleDebug --no-daemon
 
-      - name: Upload APK
+      - name: Upload Controller APK
         uses: actions/upload-artifact@v4
         with:
-          name: MATRIX-M-Remote-debug
+          name: MATRIX-M-Controller
           path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload Companion APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MATRIX-M-Companion
+          path: companion/build/outputs/apk/debug/*.apk
           if-no-files-found: error
