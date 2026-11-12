@@ -4,22 +4,24 @@ import android.app.Activity
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.widget.*
 
 class MainActivity : Activity() {
 
-    private val bg = Color.rgb(246, 247, 249)
-    private val textColor = Color.rgb(30, 35, 42)
-    private val subColor = Color.rgb(110, 117, 126)
-    private val blue = Color.rgb(45, 105, 210)
+    private val bg = Color.rgb(10, 15, 27)
+    private val cardColor = Color.rgb(22, 30, 46)
+    private val blue = Color.rgb(65, 135, 255)
+    private val white = Color.WHITE
+    private val muted = Color.rgb(160, 174, 195)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         window.statusBarColor = bg
         window.navigationBarColor = bg
-        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -29,50 +31,67 @@ class MainActivity : Activity() {
         val scroll = ScrollView(this)
         val content = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(22, 28, 22, 30)
+            setPadding(dp(20), dp(28), dp(20), dp(35))
         }
 
-        val title = TextView(this).apply {
+        val brand = TextView(this).apply {
             text = "MATRIX M"
-            textSize = 27f
-            setTextColor(textColor)
+            textSize = 30f
             typeface = Typeface.DEFAULT_BOLD
+            setTextColor(blue)
         }
-        content.addView(title)
+        content.addView(brand)
 
         val subtitle = TextView(this).apply {
-            text = "همراه دستگاه"
-            textSize = 15f
-            setTextColor(subColor)
-            setPadding(0, 5, 0, 25)
+            text = "COMPANION  •  همراه هوشمند دستگاه"
+            textSize = 13f
+            setTextColor(muted)
+            setPadding(0, dp(5), 0, dp(25))
         }
         content.addView(subtitle)
 
-        addSection(content, "وضعیت دستگاه")
-        addInfoCard(content, "●  آماده اتصال", "هنوز هیچ دستگاهی متصل نشده است.")
+        val statusCard = makeCard()
+        addText(statusCard, "وضعیت دستگاه", 18f, white, true)
+        addText(statusCard, "●  آماده اتصال", 16f, Color.rgb(90, 220, 155), true)
+        addText(statusCard, "هنوز هیچ دستگاهی متصل نشده است.", 13f, muted, false)
+        content.addView(statusCard)
 
-        addSection(content, "اتصال")
-        addActionCard(content, "اتصال به گوشی اصلی", "اسکن کد QR برای اتصال امن") {
-            Toast.makeText(this, "قابلیت اتصال در مرحله بعد ساخته می‌شود.", Toast.LENGTH_SHORT).show()
+        addSection(content, "اتصال امن")
+
+        val connect = makeCard()
+        connect.gravity = Gravity.CENTER
+        connect.setBackground(cardBackground(blue, 22))
+        addText(connect, "▦", 36f, white, true)
+        addText(connect, "اتصال به گوشی اصلی", 19f, white, true)
+        addText(connect, "اسکن کد QR برای شروع اتصال", 13f, white, false)
+        connect.setOnClickListener {
+            Toast.makeText(this, "اسکن QR در مرحله بعد پیاده‌سازی می‌شود.", Toast.LENGTH_SHORT).show()
         }
+        content.addView(connect)
 
         addSection(content, "قابلیت‌های دستگاه")
-        addSettingCard(content, "📷", "دوربین", "فعال‌سازی فقط با اجازه صاحب گوشی")
-        addSettingCard(content, "🎙", "میکروفون", "فعال‌سازی با مجوز و اعلان اندروید")
-        addSettingCard(content, "▣", "اشتراک‌گذاری صفحه", "با تأیید پنجره امنیتی اندروید")
-        addSettingCard(content, "📁", "انتقال فایل", "ارسال و دریافت فایل با تأیید کاربر")
+
+        addFeature(content, "📷", "دوربین", "فعال‌سازی فقط با اجازه صاحب گوشی")
+        addFeature(content, "🎙", "میکروفون", "استفاده با مجوز و اعلان اندروید")
+        addFeature(content, "▣", "اشتراک‌گذاری صفحه", "با تأیید پنجره امنیتی اندروید")
+        addFeature(content, "📁", "انتقال فایل", "ارسال و دریافت فایل با تأیید کاربر")
 
         addSection(content, "امنیت و دسترسی")
-        addActionCard(content, "مدیریت دسترسی‌ها", "مشاهده و لغو مجوزهای برنامه") {
-            Toast.makeText(this, "مدیریت دسترسی‌ها به‌زودی اضافه می‌شود.", Toast.LENGTH_SHORT).show()
+
+        val security = makeCard()
+        addText(security, "🛡  مدیریت دسترسی‌ها", 17f, white, true)
+        addText(security, "مشاهده و لغو مجوزهای برنامه", 13f, muted, false)
+        security.setOnClickListener {
+            Toast.makeText(this, "مدیریت دسترسی‌ها در مرحله بعد اضافه می‌شود.", Toast.LENGTH_SHORT).show()
         }
+        content.addView(security)
 
         val footer = TextView(this).apply {
-            text = "MATRIX M Companion  •  نسخه 1.0.0"
-            textSize = 12f
+            text = "MATRIX M COMPANION  •  VERSION 1.0.1"
+            textSize = 11f
             gravity = Gravity.CENTER
-            setTextColor(subColor)
-            setPadding(0, 28, 0, 10)
+            setTextColor(muted)
+            setPadding(0, dp(30), 0, dp(10))
         }
         content.addView(footer)
 
@@ -84,30 +103,20 @@ class MainActivity : Activity() {
     private fun addSection(parent: LinearLayout, title: String) {
         val view = TextView(this).apply {
             text = title
-            textSize = 17f
+            textSize = 18f
             typeface = Typeface.DEFAULT_BOLD
-            setTextColor(textColor)
-            setPadding(2, 22, 2, 12)
+            setTextColor(white)
+            setPadding(dp(2), dp(25), dp(2), dp(13))
         }
         parent.addView(view)
     }
 
-    private fun addInfoCard(parent: LinearLayout, title: String, detail: String) {
-        val card = makeCard()
-        addText(card, title, 16f, textColor, true)
-        addText(card, detail, 13f, subColor, false)
-        parent.addView(card)
-    }
-
-    private fun addActionCard(parent: LinearLayout, title: String, detail: String, action: () -> Unit) {
-        val card = makeCard()
-        card.setOnClickListener { action() }
-        addText(card, title, 16f, blue, true)
-        addText(card, detail, 13f, subColor, false)
-        parent.addView(card)
-    }
-
-    private fun addSettingCard(parent: LinearLayout, icon: String, title: String, detail: String) {
+    private fun addFeature(
+        parent: LinearLayout,
+        icon: String,
+        title: String,
+        detail: String
+    ) {
         val card = makeCard()
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -116,30 +125,19 @@ class MainActivity : Activity() {
 
         val iconView = TextView(this).apply {
             text = icon
-            textSize = 23f
-            setPadding(0, 0, 15, 0)
+            textSize = 27f
+            gravity = Gravity.CENTER
+            setTextColor(blue)
+            setPadding(0, 0, dp(15), 0)
         }
 
         val labels = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
         }
 
-        val name = TextView(this).apply {
-            text = title
-            textSize = 16f
-            setTextColor(textColor)
-            typeface = Typeface.DEFAULT_BOLD
-        }
+        addText(labels, title, 16f, white, true)
+        addText(labels, detail, 12f, muted, false)
 
-        val description = TextView(this).apply {
-            text = detail
-            textSize = 12f
-            setTextColor(subColor)
-            setPadding(0, 4, 0, 0)
-        }
-
-        labels.addView(name)
-        labels.addView(description)
         row.addView(iconView)
         row.addView(labels)
         card.addView(row)
@@ -149,25 +147,44 @@ class MainActivity : Activity() {
     private fun makeCard(): LinearLayout {
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(17, 17, 17, 17)
-            setBackgroundColor(Color.WHITE)
+            setPadding(dp(18), dp(18), dp(18), dp(18))
+            background = cardBackground(cardColor, 20)
+
             val params = LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
                 LinearLayout.LayoutParams.WRAP_CONTENT
             )
-            params.bottomMargin = 9
+            params.bottomMargin = dp(12)
             layoutParams = params
         }
     }
 
-    private fun addText(parent: LinearLayout, value: String, size: Float, color: Int, bold: Boolean) {
+    private fun cardBackground(color: Int, radius: Int): GradientDrawable {
+        return GradientDrawable().apply {
+            setColor(color)
+            cornerRadius = dp(radius).toFloat()
+            setStroke(dp(1), Color.rgb(43, 58, 82))
+        }
+    }
+
+    private fun addText(
+        parent: LinearLayout,
+        value: String,
+        size: Float,
+        color: Int,
+        bold: Boolean
+    ) {
         val view = TextView(this).apply {
             text = value
             textSize = size
             setTextColor(color)
             if (bold) typeface = Typeface.DEFAULT_BOLD
-            setPadding(0, 2, 0, 5)
+            setPadding(0, dp(3), 0, dp(6))
         }
         parent.addView(view)
+    }
+
+    private fun dp(value: Int): Int {
+        return (value * resources.displayMetrics.density).toInt()
     }
 }
