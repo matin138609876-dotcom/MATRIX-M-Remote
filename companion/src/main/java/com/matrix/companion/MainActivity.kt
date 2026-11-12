@@ -168,7 +168,7 @@ class MainActivity : Activity() {
         scroll.addView(content)
         root.addView(scroll)
         setContentView(root)
-    }    }
+    }
 
     private fun addSection(parent: LinearLayout, title: String) {
         val view = TextView(this).apply {
