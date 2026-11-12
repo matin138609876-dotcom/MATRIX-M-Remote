@@ -28,22 +28,42 @@ jobs:
         uses: android-actions/setup-android@v4
 
       - name: Install Android SDK packages
-        run: |
-          sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0"
+        run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;35.0.0"
 
-      - name: Build both APKs
-        run: gradle assembleDebug :companion:assembleDebug --no-daemon
+      - name: Restore signing key
+        shell: bash
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PATH: ${{ runner.temp }}/matrix-m-release.jks
+        run: |
+          set -euo pipefail
+          test -n "$KEYSTORE_BASE64"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+
+      - name: Build signed Release APKs
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: matrixm
+          KEYSTORE_PATH: ${{ runner.temp }}/matrix-m-release.jks
+        run: gradle assembleRelease :companion:assembleRelease --no-daemon
 
       - name: Upload Controller APK
         uses: actions/upload-artifact@v4
         with:
-          name: MATRIX-M-Controller
-          path: app/build/outputs/apk/debug/*.apk
+          name: MATRIX-M-Controller-Release
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
       - name: Upload Companion APK
         uses: actions/upload-artifact@v4
         with:
-          name: MATRIX-M-Companion
-          path: companion/build/outputs/apk/debug/*.apk
+          name: MATRIX-M-Companion-Release
+          path: companion/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      - name: Remove signing key
+        if: always()
+        env:
+          KEYSTORE_PATH: ${{ runner.temp }}/matrix-m-release.jks
+        run: rm -f "$KEYSTORE_PATH"
