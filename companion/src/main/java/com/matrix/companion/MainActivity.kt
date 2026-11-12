@@ -1,6 +1,7 @@
 package com.matrix.companion
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -8,6 +9,8 @@ import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
 import android.view.View
 import android.widget.*
+import android.text.InputType
+import com.matrix.remote.security.PasswordManager
 
 class MainActivity : Activity() {
 
@@ -19,6 +22,73 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        showPasswordGate()
+    }
+
+    private fun showPasswordGate() {
+        val manager = PasswordManager(this)
+
+        fun askPassword(firstSetup: Boolean) {
+            val box = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(48, 12, 48, 4)
+            }
+            val password = EditText(this).apply {
+                hint = if (firstSetup) "رمز جدید، حداقل ۶ کاراکتر و شامل عدد" else "رمز ورود"
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            }
+            box.addView(password)
+
+            val confirm = if (firstSetup) EditText(this).apply {
+                hint = "تکرار رمز"
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            } else null
+            confirm?.let { box.addView(it) }
+
+            AlertDialog.Builder(this)
+                .setTitle(if (firstSetup) "تنظیم رمز MATRIX M" else "ورود به MATRIX M")
+                .setMessage(if (firstSetup) "برای محافظت از برنامه یک رمز تعیین کن." else "برای ادامه رمز ورود را وارد کن.")
+                .setView(box)
+                .setCancelable(false)
+                .setPositiveButton(if (firstSetup) "ثبت رمز" else "ورود", null)
+                .create().also { dialog ->
+                    dialog.setOnShowListener {
+                        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                            val first = password.text.toString().toCharArray()
+                            val second = confirm?.text?.toString()?.toCharArray()
+                            val success = if (firstSetup) {
+                                if (second == null || !first.contentEquals(second)) {
+                                    false
+                                } else {
+                                    manager.setPassword(first)
+                                }
+                            } else {
+                                manager.verifyPassword(first)
+                            }
+
+                            first.fill('\u0000')
+                            second?.fill('\u0000')
+
+                            if (success) {
+                                dialog.dismiss()
+                                initializeApp()
+                            } else {
+                                Toast.makeText(
+                                    this,
+                                    if (firstSetup) "رمزها یکسان نیستند یا رمز شرایط لازم را ندارد." else "رمز اشتباه است.",
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    }
+                    dialog.show()
+                }
+        }
+
+        askPassword(!manager.isPasswordSet())
+    }
+
+    private fun initializeApp() {
 
         window.statusBarColor = bg
         window.navigationBarColor = bg
@@ -98,7 +168,7 @@ class MainActivity : Activity() {
         scroll.addView(content)
         root.addView(scroll)
         setContentView(root)
-    }
+    }    }
 
     private fun addSection(parent: LinearLayout, title: String) {
         val view = TextView(this).apply {

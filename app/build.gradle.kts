@@ -48,4 +48,5 @@ android {
 
 dependencies {
     implementation(project(":devices"))
+    implementation(project(":security"))
 }
