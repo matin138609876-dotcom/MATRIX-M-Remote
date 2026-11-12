@@ -128,7 +128,7 @@ class MainActivity : Activity() {
 
         setContentView(root)
         buildHome()
-    }    }
+    }
 
     private fun buildHome() {
         content.removeAllViews()
