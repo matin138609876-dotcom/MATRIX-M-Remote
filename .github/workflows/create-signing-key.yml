@@ -1,0 +1,44 @@
+name: Create MATRIX M Signing Key
+
+on:
+  workflow_dispatch:
+
+jobs:
+  create-key:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate signing keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -e
+          keytool -genkeypair \
+            -v \
+            -keystore matrix-m-release.jks \
+            -storetype PKCS12 \
+            -alias matrixm \
+            -keyalg RSA \
+            -keysize 4096 \
+            -validity 10000 \
+            -dname "CN=MATRIX M, OU=Mobile, O=MATRIX M, L=Unknown, ST=Unknown, C=DE" \
+            -storepass:env KEYSTORE_PASSWORD \
+            -keypass:env KEYSTORE_PASSWORD
+
+      - name: Encrypt keystore
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -e
+          openssl enc -aes-256-cbc -salt -pbkdf2 -iter 600000 \
+            -in matrix-m-release.jks \
+            -out matrix-m-release.jks.enc \
+            -pass env:KEYSTORE_PASSWORD
+          rm -f matrix-m-release.jks
+
+      - name: Upload encrypted keystore
+        uses: actions/upload-artifact@v4
+        with:
+          name: MATRIX-M-Encrypted-Signing-Key
+          path: matrix-m-release.jks.enc
+          retention-days: 7
+          if-no-files-found: error
