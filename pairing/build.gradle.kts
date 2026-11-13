@@ -20,3 +20,8 @@ android {
         jvmTarget = "17"
     }
 }
+
+dependencies {
+    implementation(project(":security"))
+    implementation("com.google.zxing:core:3.5.4")
+}

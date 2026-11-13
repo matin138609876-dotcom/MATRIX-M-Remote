@@ -2,6 +2,8 @@ package com.matrix.remote
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -10,12 +12,24 @@ import android.view.Gravity
 import android.view.View
 import android.widget.*
 import android.text.InputType
+import java.util.Locale
 import com.matrix.remote.security.PasswordManager
 import com.matrix.remote.devices.DeviceRepository
 import com.matrix.remote.devices.DeviceStatus
 import com.matrix.remote.devices.MatrixDevice
+import com.matrix.remote.pairing.PairingInvite
+import com.matrix.remote.pairing.QrCodeGenerator
+import android.os.Build
 
 class MainActivity : Activity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("trimax_m_settings", Context.MODE_PRIVATE)
+        val language = prefs.getString("app_language", "en") ?: "en"
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(Locale(language))
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
 
     private val red = Color.rgb(235, 25, 45)
     private val white = Color.WHITE
@@ -51,7 +65,7 @@ class MainActivity : Activity() {
             confirm?.let { box.addView(it) }
 
             AlertDialog.Builder(this)
-                .setTitle(if (firstSetup) "تنظیم رمز MATRIX M" else "ورود به MATRIX M")
+                .setTitle(if (firstSetup) "تنظیم رمز TRIMAX M" else "ورود به TRIMAX M")
                 .setMessage(if (firstSetup) "برای محافظت از برنامه یک رمز تعیین کن." else "برای ادامه رمز ورود را وارد کن.")
                 .setView(box)
                 .setCancelable(false)
@@ -134,7 +148,7 @@ class MainActivity : Activity() {
         content.removeAllViews()
 
         val title = TextView(this).apply {
-            text = "MATRIX M"
+            text = "TRIMAX M"
             textSize = 34f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
@@ -153,7 +167,7 @@ class MainActivity : Activity() {
 
         val devices = repository.getDevices()
         val status = TextView(this).apply {
-            text = "●  ${devices.size} دستگاه ثبت‌شده"
+            text = getString(R.string.registered_devices, devices.size)
             textSize = 14f
             gravity = Gravity.CENTER
             setTextColor(Color.rgb(100, 230, 140))
@@ -169,19 +183,15 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER
             setPadding(dp(24), dp(28), dp(24), dp(28))
             background = transparentPanel()
-            contentDescription = "اتصال امن و ساخت QR"
+            contentDescription = getString(R.string.secure_qr)
             setOnClickListener {
-                showFeature(
-                    "اتصال امن",
-                    "اتصال گوشی جدید",
-                    "مرحله ساخت QR و اتصال واقعی در حال توسعه است."
-                )
+                showPairingScreen()
             }
         }
         content.addView(mask, LinearLayout.LayoutParams(-1, dp(190)))
 
         val hint = TextView(this).apply {
-            text = "برای اتصال امن، نقاب را لمس کن"
+            text = getString(R.string.tap_mask)
             textSize = 13f
             gravity = Gravity.CENTER
             setTextColor(white)
@@ -189,42 +199,42 @@ class MainActivity : Activity() {
         content.addView(hint)
         content.addView(space(25))
 
-        addFeature("📱", "دستگاه‌های من", "مشاهده و مدیریت گوشی‌های ثبت‌شده") {
+        addFeature("📱", getString(R.string.my_devices), getString(R.string.manage_devices)) {
             showDeviceManagement()
         }
 
-        addFeature("📷", "دوربین زنده", "مشاهده دوربین گوشی دوم") {
-            showFeature("دوربین زنده", "دوربین گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("📷", getString(R.string.live_camera), getString(R.string.second_phone_camera)) {
+            showFeature(getString(R.string.live_camera), getString(R.string.second_phone_camera), getString(R.string.not_implemented))
         }
 
-        addFeature("🎙️", "صدای زنده", "دریافت صدای زنده با اجازه صاحب دستگاه") {
-            showFeature("صدای زنده", "میکروفون گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("🎙️", getString(R.string.live_audio), getString(R.string.live_audio_detail)) {
+            showFeature(getString(R.string.live_audio), getString(R.string.second_phone_microphone), getString(R.string.not_implemented))
         }
 
-        addFeature("▣", "نمایشگر زنده", "مشاهده صفحه گوشی دوم") {
-            showFeature("نمایشگر زنده", "اشتراک صفحه", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("▣", getString(R.string.live_display), getString(R.string.live_display_detail)) {
+            showFeature(getString(R.string.live_display), getString(R.string.screen_sharing), getString(R.string.not_implemented))
         }
 
-        addFeature("📍", "موقعیت زنده", "موقعیت مکانی با اجازه صاحب دستگاه") {
-            showFeature("موقعیت زنده", "موقعیت گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("📍", getString(R.string.live_location), getString(R.string.live_location_detail)) {
+            showFeature(getString(R.string.live_location), getString(R.string.second_phone_location), getString(R.string.not_implemented))
         }
 
-        addFeature("🔔", "اعلان‌ها", "مشاهده اعلان‌های مجاز گوشی دوم") {
-            showFeature("اعلان‌ها", "اعلان‌های گوشی دوم", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("🔔", getString(R.string.notifications), getString(R.string.notifications_detail)) {
+            showFeature(getString(R.string.notifications), getString(R.string.second_phone_notifications), getString(R.string.not_implemented))
         }
 
-        addFeature("📁", "انتقال فایل", "انتقال فایل با اجازه صاحب دستگاه") {
-            showFeature("انتقال فایل", "مدیریت فایل‌ها", "این قابلیت هنوز پیاده‌سازی نشده است.")
+        addFeature("📁", getString(R.string.file_transfer), getString(R.string.file_transfer_detail)) {
+            showFeature(getString(R.string.file_transfer), getString(R.string.file_management), getString(R.string.not_implemented))
         }
 
-        addFeature("⚙", "تنظیمات", "تنظیمات و مدیریت دسترسی‌ها") {
+        addFeature("⚙", getString(R.string.settings), getString(R.string.settings_detail)) {
             showSettings()
         }
 
         content.addView(space(22))
 
         val footer = TextView(this).apply {
-            text = "MATRIX M  •  VERSION 1.0.2"
+            text = "TRIMAX M  •  VERSION 1.0.2"
             textSize = 11f
             gravity = Gravity.CENTER
             setTextColor(muted)
@@ -289,7 +299,7 @@ class MainActivity : Activity() {
         content.addView(space(20))
 
         val heading = TextView(this).apply {
-            text = "دستگاه‌های من"
+            text = getString(R.string.my_devices)
             textSize = 26f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
@@ -299,7 +309,7 @@ class MainActivity : Activity() {
         content.addView(space(15))
 
         val addButton = TextView(this).apply {
-            text = "＋  افزودن دستگاه"
+            text = getString(R.string.add_device)
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(white)
@@ -315,7 +325,7 @@ class MainActivity : Activity() {
 
         if (devices.isEmpty()) {
             val empty = TextView(this).apply {
-                text = "هنوز دستگاهی ثبت نشده است."
+                text = getString(R.string.no_devices)
                 textSize = 14f
                 gravity = Gravity.CENTER
                 setTextColor(muted)
@@ -349,9 +359,9 @@ class MainActivity : Activity() {
         card.addView(name)
 
         val stateText = when (device.status) {
-            DeviceStatus.PENDING -> "در انتظار اتصال واقعی"
-            DeviceStatus.CONNECTED -> "متصل"
-            DeviceStatus.DISCONNECTED -> "قطع اتصال"
+            DeviceStatus.PENDING -> getString(R.string.pending_connection)
+            DeviceStatus.CONNECTED -> getString(R.string.connected)
+            DeviceStatus.DISCONNECTED -> getString(R.string.disconnected)
         }
 
         val state = TextView(this).apply {
@@ -367,21 +377,21 @@ class MainActivity : Activity() {
             gravity = Gravity.CENTER_VERTICAL
         }
 
-        val select = smallButton(if (selected) "انتخاب‌شده" else "انتخاب") {
+        val select = smallButton(if (selected) getString(R.string.selected) else getString(R.string.select)) {
             repository.selectDevice(device.id)
             showDeviceManagement()
         }
 
-        val rename = smallButton("تغییر نام") {
+        val rename = smallButton(getString(R.string.rename)) {
             showRenameDialog(device)
         }
 
-        val delete = smallButton("حذف") {
+        val delete = smallButton(getString(R.string.delete)) {
             AlertDialog.Builder(this@MainActivity)
-                .setTitle("حذف دستگاه")
-                .setMessage("دستگاه «${device.name}» حذف شود؟")
-                .setNegativeButton("انصراف", null)
-                .setPositiveButton("حذف") { _, _ ->
+                .setTitle(getString(R.string.delete_device))
+                .setMessage(getString(R.string.delete_device_message, device.name))
+                .setNegativeButton(getString(R.string.cancel), null)
+                .setPositiveButton(getString(R.string.delete)) { _, _ ->
                     repository.removeDevice(device.id)
                     showDeviceManagement()
                 }
@@ -417,16 +427,16 @@ class MainActivity : Activity() {
 
     private fun showAddDeviceDialog() {
         val input = EditText(this).apply {
-            hint = "مثلاً گوشی متین"
+            hint = getString(R.string.device_name_hint)
             setSingleLine(true)
         }
 
         AlertDialog.Builder(this)
-            .setTitle("ثبت دستگاه جدید")
-            .setMessage("نامی برای دستگاه انتخاب کن.")
+            .setTitle(getString(R.string.new_device))
+            .setMessage(getString(R.string.choose_device_name))
             .setView(input)
-            .setNegativeButton("انصراف", null)
-            .setPositiveButton("ثبت") { _, _ ->
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(R.string.register_password)) { _, _ ->
                 val name = input.text.toString().trim()
 
                 if (name.isNotEmpty()) {
@@ -435,7 +445,7 @@ class MainActivity : Activity() {
                 } else {
                     Toast.makeText(
                         this,
-                        "نام دستگاه را وارد کن.",
+                        getString(R.string.enter_device_name),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -450,10 +460,10 @@ class MainActivity : Activity() {
         }
 
         AlertDialog.Builder(this)
-            .setTitle("تغییر نام دستگاه")
+            .setTitle(getString(R.string.rename_device))
             .setView(input)
-            .setNegativeButton("انصراف", null)
-            .setPositiveButton("ذخیره") { _, _ ->
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(R.string.save)) { _, _ ->
                 val name = input.text.toString().trim()
 
                 if (name.isNotEmpty()) {
@@ -465,13 +475,69 @@ class MainActivity : Activity() {
     }
 
 
+    private fun showPairingScreen() {
+        content.removeAllViews()
+        addBackButton()
+        content.addView(space(20))
+
+        val invite = try {
+            PairingInvite(this).create(Build.MODEL)
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.invite_failed, e.message), Toast.LENGTH_LONG).show()
+            buildHome()
+            return
+        }
+
+        val heading = TextView(this).apply {
+            text = getString(R.string.secure_new_phone)
+            textSize = 23f
+            typeface = Typeface.DEFAULT_BOLD
+            gravity = Gravity.CENTER
+            setTextColor(red)
+        }
+        content.addView(heading)
+        content.addView(space(12))
+
+        val description = TextView(this).apply {
+            text = getString(R.string.scan_invitation)
+            textSize = 14f
+            gravity = Gravity.CENTER
+            setTextColor(white)
+        }
+        content.addView(description)
+        content.addView(space(20))
+
+        try {
+            val qr = ImageView(this).apply {
+                setImageBitmap(QrCodeGenerator.generate(invite))
+                setPadding(dp(8), dp(8), dp(8), dp(8))
+                setBackgroundColor(Color.WHITE)
+                contentDescription = getString(R.string.invitation_qr)
+            }
+            content.addView(qr, LinearLayout.LayoutParams(dp(280), dp(280)).apply {
+                gravity = Gravity.CENTER
+            })
+        } catch (e: Exception) {
+            Toast.makeText(this, getString(R.string.qr_failed, e.message), Toast.LENGTH_LONG).show()
+        }
+
+        content.addView(space(16))
+        val warning = TextView(this).apply {
+            text = getString(R.string.invitation_only_warning)
+            textSize = 12f
+            gravity = Gravity.CENTER
+            setTextColor(muted)
+        }
+        content.addView(warning)
+    }
+
     private fun showSettings() {
         content.removeAllViews()
         addBackButton()
         content.addView(space(35))
 
         val heading = TextView(this).apply {
-            text = "تنظیمات"
+            text = getString(R.string.settings)
             textSize = 27f
             typeface = Typeface.DEFAULT_BOLD
             gravity = Gravity.CENTER
@@ -480,8 +546,34 @@ class MainActivity : Activity() {
         content.addView(heading)
         content.addView(space(25))
 
+        val languageButton = Button(this).apply {
+            text = getString(R.string.language) + ": " +
+                if (resources.configuration.locales[0].language == "fa")
+                    getString(R.string.persian) else getString(R.string.english)
+            setTextColor(white)
+            setOnClickListener {
+                val options = arrayOf(
+                    getString(R.string.english),
+                    getString(R.string.persian)
+                )
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(R.string.language)
+                    .setItems(options) { _, which ->
+                        val selected = if (which == 0) "en" else "fa"
+                        getSharedPreferences("trimax_m_settings", MODE_PRIVATE)
+                            .edit()
+                            .putString("app_language", selected)
+                            .apply()
+                        recreate()
+                    }
+                    .show()
+            }
+        }
+        content.addView(languageButton, matchWrap())
+        content.addView(space(12))
+
         val changePassword = Button(this).apply {
-            text = "🔐  تغییر رمز ورود"
+            text = getString(R.string.change_login_password)
             setTextColor(white)
             setOnClickListener { showPasswordChangeDialog() }
         }
@@ -503,19 +595,19 @@ class MainActivity : Activity() {
             }
         }
 
-        val current = passwordField("رمز فعلی")
-        val newPassword = passwordField("رمز جدید")
-        val confirm = passwordField("تکرار رمز جدید")
+        val current = passwordField(getString(R.string.current_password))
+        val newPassword = passwordField(getString(R.string.new_password))
+        val confirm = passwordField(getString(R.string.repeat_new_password))
 
         layout.addView(current)
         layout.addView(newPassword)
         layout.addView(confirm)
 
         AlertDialog.Builder(this)
-            .setTitle("تغییر رمز ورود")
+            .setTitle(R.string.change_password_title)
             .setView(layout)
-            .setNegativeButton("انصراف", null)
-            .setPositiveButton("ذخیره", null)
+            .setNegativeButton(getString(R.string.cancel), null)
+            .setPositiveButton(getString(R.string.save), null)
             .create()
             .apply {
                 setOnShowListener {
@@ -525,16 +617,16 @@ class MainActivity : Activity() {
                         val confirmText = confirm.text.toString()
 
                         if (newPassword.text.toString() != confirmText) {
-                            Toast.makeText(this@MainActivity, "تکرار رمز با رمز جدید یکسان نیست.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@MainActivity, getString(R.string.password_repeat_error), Toast.LENGTH_SHORT).show()
                         } else if (manager.changePassword(oldChars, newChars)) {
                             oldChars.fill(' ')
                             newChars.fill(' ')
-                            Toast.makeText(this@MainActivity, "رمز ورود با موفقیت تغییر کرد.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@MainActivity, getString(R.string.password_changed), Toast.LENGTH_LONG).show()
                             dismiss()
                         } else {
                             oldChars.fill(' ')
                             newChars.fill(' ')
-                            Toast.makeText(this@MainActivity, "رمز فعلی اشتباه است یا رمز جدید شرایط لازم را ندارد.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this@MainActivity, getString(R.string.password_change_error), Toast.LENGTH_LONG).show()
                         }
                     }
                 }
@@ -544,7 +636,7 @@ class MainActivity : Activity() {
 
     private fun addBackButton() {
         val back = TextView(this).apply {
-            text = "‹  بازگشت"
+            text = getString(R.string.back)
             textSize = 16f
             gravity = Gravity.CENTER
             setTextColor(white)

@@ -2,6 +2,9 @@ package com.matrix.companion
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
+import android.content.res.Configuration
+import java.util.Locale
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Typeface
@@ -12,7 +15,19 @@ import android.widget.*
 import android.text.InputType
 import com.matrix.remote.security.PasswordManager
 
+import com.matrix.remote.pairing.PairingInvite
+import com.journeyapps.barcodescanner.IntentIntegrator
+
+
 class MainActivity : Activity() {
+
+    override fun attachBaseContext(newBase: Context) {
+        val prefs = newBase.getSharedPreferences("trimax_q_settings", Context.MODE_PRIVATE)
+        val language = prefs.getString("app_language", "en") ?: "en"
+        val config = Configuration(newBase.resources.configuration)
+        config.setLocale(Locale(language))
+        super.attachBaseContext(newBase.createConfigurationContext(config))
+    }
 
     private val bg = Color.rgb(10, 15, 27)
     private val cardColor = Color.rgb(22, 30, 46)
@@ -46,7 +61,7 @@ class MainActivity : Activity() {
             confirm?.let { box.addView(it) }
 
             AlertDialog.Builder(this)
-                .setTitle(if (firstSetup) "تنظیم رمز MATRIX M" else "ورود به MATRIX M")
+                .setTitle(if (firstSetup) "تنظیم رمز TRIMAX Q" else "ورود به TRIMAX Q")
                 .setMessage(if (firstSetup) "برای محافظت از برنامه یک رمز تعیین کن." else "برای ادامه رمز ورود را وارد کن.")
                 .setView(box)
                 .setCancelable(false)
@@ -105,7 +120,7 @@ class MainActivity : Activity() {
         }
 
         val brand = TextView(this).apply {
-            text = "MATRIX M"
+            text = "TRIMAX Q"
             textSize = 30f
             typeface = Typeface.DEFAULT_BOLD
             setTextColor(blue)
@@ -113,7 +128,7 @@ class MainActivity : Activity() {
         content.addView(brand)
 
         val subtitle = TextView(this).apply {
-            text = "COMPANION  •  همراه هوشمند دستگاه"
+            text = getString(R.string.companion_subtitle)
             textSize = 13f
             setTextColor(muted)
             setPadding(0, dp(5), 0, dp(25))
@@ -121,49 +136,75 @@ class MainActivity : Activity() {
         content.addView(subtitle)
 
         val statusCard = makeCard()
-        addText(statusCard, "وضعیت دستگاه", 18f, white, true)
-        addText(statusCard, "●  آماده اتصال", 16f, Color.rgb(90, 220, 155), true)
-        addText(statusCard, "هنوز هیچ دستگاهی متصل نشده است.", 13f, muted, false)
+        addText(statusCard, getString(R.string.device_status), 18f, white, true)
+        addText(statusCard, "●  " + getString(R.string.ready_to_connect), 16f, Color.rgb(90, 220, 155), true)
+        addText(statusCard, getString(R.string.no_connected_device), 13f, muted, false)
         content.addView(statusCard)
 
-        addSection(content, "اتصال امن")
+        addSection(content, getString(R.string.secure_connection))
 
         val connect = makeCard()
         connect.gravity = Gravity.CENTER
         connect.setBackground(cardBackground(blue, 22))
         addText(connect, "▦", 36f, white, true)
-        addText(connect, "اتصال به گوشی اصلی", 19f, white, true)
-        addText(connect, "اسکن کد QR برای شروع اتصال", 13f, white, false)
+        addText(connect, getString(R.string.connect_to_main_phone), 19f, white, true)
+        addText(connect, getString(R.string.scan_qr_to_connect), 13f, white, false)
         connect.setOnClickListener {
-            Toast.makeText(this, "اسکن QR در مرحله بعد پیاده‌سازی می‌شود.", Toast.LENGTH_SHORT).show()
+            startQrScan()
         }
         content.addView(connect)
 
-        addSection(content, "قابلیت‌های دستگاه")
+        addSection(content, getString(R.string.device_features))
 
-        addFeature(content, "📷", "دوربین", "فعال‌سازی فقط با اجازه صاحب گوشی")
-        addFeature(content, "🎙", "میکروفون", "استفاده با مجوز و اعلان اندروید")
-        addFeature(content, "▣", "اشتراک‌گذاری صفحه", "با تأیید پنجره امنیتی اندروید")
-        addFeature(content, "📁", "انتقال فایل", "ارسال و دریافت فایل با تأیید کاربر")
+        addFeature(content, "📷", getString(R.string.camera), getString(R.string.camera_permission_detail))
+        addFeature(content, "🎙", getString(R.string.microphone), getString(R.string.microphone_detail))
+        addFeature(content, "▣", getString(R.string.screen_sharing), getString(R.string.screen_sharing_detail))
+        addFeature(content, "📁", getString(R.string.file_transfer), getString(R.string.file_transfer_detail))
 
-        addSection(content, "امنیت و دسترسی")
+        addSection(content, getString(R.string.security_access))
 
         val security = makeCard()
-        addText(security, "🛡  مدیریت دسترسی‌ها", 17f, white, true)
-        addText(security, "مشاهده و لغو مجوزهای برنامه", 13f, muted, false)
+        addText(security, "🛡  " + getString(R.string.manage_permissions), 17f, white, true)
+        addText(security, getString(R.string.manage_permissions_detail), 13f, muted, false)
         security.setOnClickListener {
-            Toast.makeText(this, "مدیریت دسترسی‌ها در مرحله بعد اضافه می‌شود.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.permissions_later), Toast.LENGTH_SHORT).show()
         }
         content.addView(security)
 
         val passwordCard = makeCard()
-        addText(passwordCard, "🔐  تغییر رمز ورود", 17f, white, true)
-        addText(passwordCard, "تغییر رمز اختصاصی این گوشی", 13f, muted, false)
+        addText(passwordCard, "🔐  " + getString(R.string.change_login_password), 17f, white, true)
+        addText(passwordCard, getString(R.string.change_password_detail), 13f, muted, false)
         passwordCard.setOnClickListener { showPasswordChangeDialog() }
         content.addView(passwordCard)
 
+        val languageButton = Button(this).apply {
+            text = getString(R.string.language) + ": " +
+                if (resources.configuration.locales[0].language == "fa")
+                    getString(R.string.persian) else getString(R.string.english)
+            setTextColor(white)
+            setOnClickListener {
+                val options = arrayOf(
+                    getString(R.string.english),
+                    getString(R.string.persian)
+                )
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle(R.string.language)
+                    .setItems(options) { _, which ->
+                        val selected = if (which == 0) "en" else "fa"
+                        getSharedPreferences("trimax_q_settings", MODE_PRIVATE)
+                            .edit()
+                            .putString("app_language", selected)
+                            .apply()
+                        recreate()
+                    }
+                    .show()
+            }
+        }
+        content.addView(languageButton)
+        content.addView(space(12))
+
         val footer = TextView(this).apply {
-            text = "MATRIX M COMPANION  •  VERSION 1.0.2"
+            text = "TRIMAX Q  •  VERSION 1.0.2"
             textSize = 11f
             gravity = Gravity.CENTER
             setTextColor(muted)
@@ -176,6 +217,66 @@ class MainActivity : Activity() {
         setContentView(root)
     }
 
+
+
+    private fun startQrScan() {
+        IntentIntegrator(this)
+            .setDesiredBarcodeFormats(IntentIntegrator.QR_CODE)
+            .setPrompt(getString(R.string.scan_controller_qr))
+            .setBeepEnabled(false)
+            .setOrientationLocked(false)
+            .initiateScan()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val result = IntentIntegrator.parseActivityResult(requestCode, resultCode, data)
+        if (result != null) {
+            val inviteText = result.contents
+            if (inviteText.isNullOrBlank()) {
+                Toast.makeText(this, getString(R.string.scan_cancelled), Toast.LENGTH_SHORT).show()
+            } else {
+                handleScannedInvite(inviteText)
+            }
+        }
+    }
+
+    private fun handleScannedInvite(inviteText: String) {
+        if (!PairingInvite(this).verify(inviteText)) {
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.invalid_invitation))
+                .setMessage(getString(R.string.invalid_invitation_detail))
+                .setPositiveButton(getString(R.string.ok), null)
+                .show()
+            return
+        }
+
+        try {
+            val envelope = org.json.JSONObject(inviteText)
+            val payloadBytes = android.util.Base64.decode(
+                envelope.getString("payload"),
+                android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP or android.util.Base64.NO_PADDING
+            )
+            val payload = org.json.JSONObject(String(payloadBytes, Charsets.UTF_8))
+            val name = payload.getString("deviceName")
+            val fingerprint = payload.getString("fingerprint")
+
+            AlertDialog.Builder(this)
+                .setTitle(getString(R.string.connection_confirmation))
+                .setMessage(getString(R.string.requesting_phone, name, fingerprint))
+                .setNegativeButton(getString(R.string.reject), null)
+                .setPositiveButton(getString(R.string.accept)) { _, _ ->
+                    Toast.makeText(
+                        this,
+                        getString(R.string.invitation_accepted),
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                .show()
+        } catch (_: Exception) {
+            Toast.makeText(this, getString(R.string.qr_read_error), Toast.LENGTH_LONG).show()
+        }
+    }
 
     private fun showPasswordChangeDialog() {
         val manager = PasswordManager(this)

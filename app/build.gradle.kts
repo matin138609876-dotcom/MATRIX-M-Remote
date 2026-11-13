@@ -47,6 +47,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":pairing"))
     implementation(project(":devices"))
     implementation(project(":security"))
 }
