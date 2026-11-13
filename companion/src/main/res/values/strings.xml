@@ -19,7 +19,7 @@
     <string name="scan_qr_to_connect">Scan a QR code to start connecting</string>
     <string name="device_features">Device features</string>
     <string name="camera">Camera</string>
-    <string name="camera_permission_detail">Activation only with the phone owner's permission</string>
+    <string name="camera_permission_detail">Activation only with the phone owner\'s permission</string>
     <string name="microphone">Microphone</string>
     <string name="microphone_detail">Use with Android permission and notification</string>
     <string name="screen_sharing">Screen sharing</string>
@@ -31,8 +31,8 @@
     <string name="manage_permissions_detail">View and revoke app permissions</string>
     <string name="permissions_later">Permission management will be added in a later step.</string>
     <string name="change_login_password">Change login password</string>
-    <string name="change_password_detail">Change this phone's dedicated password</string>
-    <string name="scan_controller_qr">Scan the Controller phone's QR code</string>
+    <string name="change_password_detail">Change this phone\'s dedicated password</string>
+    <string name="scan_controller_qr">Scan the Controller phone\'s QR code</string>
     <string name="scan_cancelled">Scan cancelled.</string>
     <string name="invalid_invitation">Invalid invitation</string>
     <string name="invalid_invitation_detail">The code signature is invalid or the invitation has expired.</string>
