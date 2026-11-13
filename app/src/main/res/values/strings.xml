@@ -45,7 +45,7 @@
     <string name="rename">Rename</string>
     <string name="delete">Delete</string>
     <string name="delete_device">Delete device</string>
-    <string name="delete_device_message">Delete device \"%1$s\"?</string>
+    <string name="delete_device_message">Delete device "%1$s"?</string>
     <string name="cancel">Cancel</string>
     <string name="device_name_hint">For example, Matin's phone</string>
     <string name="new_device">Register new device</string>
