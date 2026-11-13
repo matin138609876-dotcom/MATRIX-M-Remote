@@ -18,15 +18,15 @@
     <string name="live_camera">Live camera</string>
     <string name="second_phone_camera">View the second phone camera</string>
     <string name="live_audio">Live audio</string>
-    <string name="live_audio_detail">Receive live audio with the device owner's permission</string>
+    <string name="live_audio_detail">Receive live audio with the device owner\'s permission</string>
     <string name="live_display">Live display</string>
     <string name="live_display_detail">View the second phone screen</string>
     <string name="live_location">Live location</string>
-    <string name="live_location_detail">Location access with the device owner's permission</string>
+    <string name="live_location_detail">Location access with the device owner\'s permission</string>
     <string name="notifications">Notifications</string>
     <string name="notifications_detail">View permitted notifications from the second phone</string>
     <string name="file_transfer">File transfer</string>
-    <string name="file_transfer_detail">Transfer files with the device owner's permission</string>
+    <string name="file_transfer_detail">Transfer files with the device owner\'s permission</string>
     <string name="settings">Settings</string>
     <string name="settings_detail">Settings and permission management</string>
     <string name="not_implemented">This feature has not been implemented yet.</string>
@@ -47,7 +47,7 @@
     <string name="delete_device">Delete device</string>
     <string name="delete_device_message">Delete device "%1$s"?</string>
     <string name="cancel">Cancel</string>
-    <string name="device_name_hint">For example, Matin's phone</string>
+    <string name="device_name_hint">For example, Matin\'s phone</string>
     <string name="new_device">Register new device</string>
     <string name="choose_device_name">Choose a name for this device.</string>
     <string name="save">Save</string>
