@@ -16,7 +16,7 @@ import android.text.InputType
 import com.matrix.remote.security.PasswordManager
 
 import com.matrix.remote.pairing.PairingInvite
-import com.journeyapps.barcodescanner.IntentIntegrator
+import com.google.zxing.integration.android.IntentIntegrator
 
 
 class MainActivity : Activity() {
@@ -413,6 +413,12 @@ class MainActivity : Activity() {
             setPadding(0, dp(3), 0, dp(6))
         }
         parent.addView(view)
+    }
+
+    private fun space(height: Int): View {
+        return View(this).apply {
+            layoutParams = LinearLayout.LayoutParams(1, dp(height))
+        }
     }
 
     private fun dp(value: Int): Int {
